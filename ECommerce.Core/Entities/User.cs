@@ -16,6 +16,7 @@ namespace ECommerce.Core.Entities
         public string Email { get; set; }
         public string PasswordHash { get; set; }
         public string PhoneNumber { get; set; }
+        public  string ResetToken { get; set; }
         public UserType UserType { get; set; }
 
         public ICollection<Order> Orders { get; set; } = new List<Order>();

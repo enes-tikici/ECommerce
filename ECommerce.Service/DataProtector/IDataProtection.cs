@@ -6,7 +6,9 @@ using System.Threading.Tasks;
 
 namespace ECommerce.Service.DataProtector
 {
-    public interface IDataProtector
+    public interface IDataProtection
     {
+        string Protected(string text);
+        string Unprotected(string unprotectedText);
     }
 }

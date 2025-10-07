@@ -10,13 +10,16 @@ namespace ECommerce.Data.UnitOfWork
 {
     public interface IUnitOfWork : IDisposable
     {
-        IRepository<User> Users { get; }
-        IRepository<Product> Products { get; }
-        IRepository<Category> Categories { get; }
-        IRepository<Cart> Carts { get; }
-        IRepository<CartItem> CartItems { get; }
-        IRepository<Order> Orders { get; }
-        IRepository<OrderDetail> OrderDetails { get; }
+        //IRepository<User> Users { get; }
+        //IRepository<Product> Products { get; }
+        //IRepository<Category> Categories { get; }
+        //IRepository<Cart> Carts { get; }
+        //IRepository<CartItem> CartItems { get; }
+        //IRepository<Order> Orders { get; }
+        //IRepository<OrderDetail> OrderDetails { get; }
+
+        // Generic repository erişimi
+        IRepository<T> GetRepository<T>() where T : BaseEntity;
 
         Task<int> CompleteAsync(); // SaveChangesAsync
         Task BeginTransactionAsync(); // Transaction başlat

@@ -13,26 +13,27 @@ namespace ECommerce.Data.UnitOfWork
     public class UnitOfWork : IUnitOfWork
     {
         private readonly ECommerceDbContext _context;
-        private IDbContextTransaction? _transaction;
-        public IRepository<User> Users { get; }
-        public IRepository<Product> Products { get; }
-        public IRepository<Category> Categories { get; }
-        public IRepository<Cart> Carts { get; }
-        public IRepository<CartItem> CartItems { get; }
-        public IRepository<Order> Orders { get; }
-        public IRepository<OrderDetail> OrderDetails { get; }
+        private IDbContextTransaction _transaction;
+        private readonly Dictionary<Type, object> _repositories = new();
+        //public IRepository<User> Users { get; }
+        //public IRepository<Product> Products { get; }
+        //public IRepository<Category> Categories { get; }
+        //public IRepository<Cart> Carts { get; }
+        //public IRepository<CartItem> CartItems { get; }
+        //public IRepository<Order> Orders { get; }
+        //public IRepository<OrderDetail> OrderDetails { get; }
 
         public UnitOfWork(ECommerceDbContext context)
         {
             _context = context;
 
-            Users = new Repository<User>(_context);
-            Products = new Repository<Product>(_context);
-            Categories = new Repository<Category>(_context);
-            Carts = new Repository<Cart>(_context);
-            CartItems = new Repository<CartItem>(_context);
-            Orders = new Repository<Order>(_context);
-            OrderDetails = new Repository<OrderDetail>(_context);
+            //Users = new Repository<User>(_context);
+            //Products = new Repository<Product>(_context);
+            //Categories = new Repository<Category>(_context);
+            //Carts = new Repository<Cart>(_context);
+            //CartItems = new Repository<CartItem>(_context);
+            //Orders = new Repository<Order>(_context);
+            //OrderDetails = new Repository<OrderDetail>(_context);
         }
 
         public async Task<int> CompleteAsync()
@@ -71,6 +72,18 @@ namespace ECommerce.Data.UnitOfWork
         public void Dispose()
         {
             _context.Dispose();
+        }
+
+        public IRepository<T> GetRepository<T>() where T : BaseEntity
+        {
+            var type = typeof(T);
+            if (!_repositories.ContainsKey(type))
+            {
+                var repoInstance = new Repository<T>(_context);
+                _repositories.Add(type, repoInstance);
+            }
+
+            return (IRepository<T>)_repositories[type];
         }
     }
 }

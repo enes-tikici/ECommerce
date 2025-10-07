@@ -3,6 +3,7 @@ using ECommerce.Data.Repository;
 using ECommerce.Data.UnitOfWork;
 using ECommerce.Service.DataProtector;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,7 +23,7 @@ builder.Services.AddDbContext<ECommerceDbContext>(options =>
 
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IUnitOfWork, IUnitOfWork>();
-builder.Services.AddScoped<IDataProtector, DataProtector>();
+builder.Services.AddScoped<IDataProtection, DataProtection>();
 
 var app = builder.Build();
 
