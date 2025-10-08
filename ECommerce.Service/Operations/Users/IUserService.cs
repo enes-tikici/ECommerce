@@ -16,5 +16,7 @@ namespace ECommerce.Service.Operations.Users
         Task<ServiceMassage> ForgotPasswordAsync(UserForgotPasswordDto dto);
         Task<ServiceMassage> ResetPasswordAsync(UserResetPasswordDto dto);
         Task<ServiceMassage> Delete(int id);
+        Task<ServiceMassage> LoginAsync(LoginUserDto dto);
+        Task<ServiceMassage<UserInfoDto>> GetByIdAsync(int id);
     }
 }

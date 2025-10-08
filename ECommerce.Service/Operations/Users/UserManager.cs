@@ -3,6 +3,8 @@ using ECommerce.Data.UnitOfWork;
 using ECommerce.Service.DataProtector;
 using ECommerce.Service.Operations.Users.Dtos;
 using ECommerce.Service.Types;
+using ECommerce.Web.Jwt;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,11 +17,13 @@ namespace ECommerce.Service.Operations.Users
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IDataProtection _dataProtector;
+        private readonly IConfiguration _configuration;
 
-        public UserManager(IUnitOfWork unitOfWork, IDataProtection dataProtection)
+        public UserManager(IUnitOfWork unitOfWork, IDataProtection dataProtection, IConfiguration configuration)
         {
             _unitOfWork = unitOfWork;
             _dataProtector = dataProtection;
+            _configuration = configuration;
         }
         public async Task<ServiceMassage> AddAsync(UserAddDto dto)
         {
@@ -232,6 +236,119 @@ namespace ECommerce.Service.Operations.Users
             }
         }
 
+        public async Task<ServiceMassage<UserInfoDto>> GetByIdAsync(int id)
+        {
+            try
+            {
+                var repo = _unitOfWork.GetRepository<User>();
+                var user = await repo.GetByIdAsync(id);
+
+                if (user is null)
+                {
+                    return new ServiceMassage<UserInfoDto>
+                    {
+                        IsSucced = false,
+                        Massage = "kullanıcı bulunamadı"
+                    };
+                }
+
+                return new ServiceMassage<UserInfoDto>
+                {
+                    IsSucced = true,
+                    Massage = "kullanıcı bulundu",
+                    Data = new UserInfoDto
+                    {
+                        Id = user.Id,
+                        FirstName = user.FirstName,
+                        LastName = user.LastName,
+                        Email = user.Email,
+                        PhoneNumber = user.PhoneNumber,
+                        UserType = user.UserType,
+                        CreatedDate = user.CreatedDate
+                    }
+
+                };
+            }
+            catch (Exception)
+            {
+
+                return new ServiceMassage<UserInfoDto>
+                {
+                    IsSucced = false,
+                    Massage = "Beklenmeyen bir hata oluştu"
+                };
+            }
+        }
+
+        public async Task<ServiceMassage> LoginAsync(LoginUserDto dto)
+        {
+            try
+            {
+                var repository = _unitOfWork.GetRepository<User>();
+
+                var user = (await repository.GetAllAsync(u => u.Email.ToLower() == dto.Email.ToLower())).FirstOrDefault();
+
+                if (user is null)
+                {
+                    return new ServiceMassage<UserInfoDto>
+                    {
+                        IsSucced = false,
+                        Massage = "Email veya şifre yanlış"
+                    };
+                }
+
+                var unprotectedPassword = _dataProtector.Unprotected(user.PasswordHash);
+                if (unprotectedPassword != dto.Password)
+                {
+                    return new ServiceMassage<UserInfoDto>
+                    {
+                        IsSucced = false,
+                        Massage = "Email yada şifre yanlış"
+                    };
+                }
+
+                //token üretimi
+                var token = JwtHelper.GenerateJwtToken(new JwtDto
+                {
+                    Id = user.Id,
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
+                    Email = user.Email,
+                    PhoneNumber = user.PhoneNumber,
+                    UserType = user.UserType,
+                    SecretKey = _configuration["Jwt:SecretKey"]!,
+                    Issuer = _configuration["Jwt:Issuer"]!,
+                    Audience = _configuration["Jwt:Audience"]!,
+                    ExpireMinutes = Convert.ToInt32(_configuration["Jwt:ExpireMinutes"]!)
+                });
+
+                var userInfo = new UserInfoDto
+                {
+                    Id = user.Id,
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
+                    Email = user.Email,
+                    PhoneNumber = user.PhoneNumber,
+                    UserType = user.UserType
+                };
+
+                return new ServiceMassage<UserInfoDto>
+                {
+                    IsSucced = true,
+                    Massage = "Giriş başarılı",
+                    Data = userInfo
+                };
+            }
+            catch (Exception)
+            {
+
+                return new ServiceMassage<UserInfoDto>
+                {
+                    IsSucced = false,
+                    Massage = "Bir hata oluştu"
+                };
+            }
+        }
 
         public async Task<ServiceMassage> ResetPasswordAsync(UserResetPasswordDto dto)
         {

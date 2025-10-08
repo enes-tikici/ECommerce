@@ -4,6 +4,8 @@ using ECommerce.Data.UnitOfWork;
 using ECommerce.Service.DataProtector;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +18,28 @@ var keysDirectory = new DirectoryInfo(Path.Combine(builder.Environment.ContentRo
 builder.Services.AddDataProtection()
     .SetApplicationName("ECommerce")
     .PersistKeysToFileSystem(keysDirectory);
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+
+            ValidateAudience = true,
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero, // isteğe bağlı, token süresi tam uyumlu olsun
+
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                System.Text.Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SecretKey"]!)
+            )
+        };
+    });
+
 
 builder.Services.AddDbContext<ECommerceDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
